@@ -43,25 +43,44 @@ export const initHandlers = (
     startDate: string,
     endDate: string,
     strapi: any,
-    config: SettingsType
-  ) =>
-    (
-      await strapi.documents(config.collection).findMany({
-        filters: {
-          $and: [
-            {
-              [config.startField]: {
-                $gte: moment(startDate).startOf('day').format(),
-                $lte: moment(endDate).endOf('day').format(),
-              },
-            },
-          ],
+    config: SettingsType,
+    user: any
+  ) => {
+    // Base filter for date range
+    const filters: any = {
+      $and: [
+        {
+          [config.startField]: {
+            $gte: moment(startDate).startOf('day').format(),
+            $lte: moment(endDate).endOf('day').format(),
+          },
         },
+      ],
+    };
+
+    // Add user filter if user is not a super admin
+    if (user && user.roles) {
+      const isSuperAdmin = user.roles.some(
+        (role: any) => role.type === 'strapi-super-admin'
+      );
+      
+      // If not super admin, filter by createdBy
+      if (!isSuperAdmin) {
+        filters.$and.push({
+          createdBy: user.id,
+        });
+      }
+    }
+
+    return (
+      await strapi.documents(config.collection).findMany({
+        filters,
       })
     ).reduce((acc: Record<string, any>, el: any) => {
       acc[el.id] = el;
       return acc;
     }, {});
+  };
 
   let endHandler: Function | undefined;
 

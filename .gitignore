@@ -102,6 +102,12 @@ public/uploads/*
 dist
 build
 
+# Ignore compiled JavaScript files in src directories, except specific files
+server/src/**/*.js
+admin/src/**/*.js
+!admin/src/pages/settings.js
+types.js
+
 
 ############################
 # Node.js

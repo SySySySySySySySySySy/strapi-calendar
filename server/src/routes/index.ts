@@ -5,7 +5,6 @@ export default [
     handler: 'controller.getData',
     config: {
       policies: [],
-      auth: false,
     },
   },
   {
