@@ -7,7 +7,7 @@ import { createDefaultConfig, getPluginStore, initHandlers } from '../utils';
 import { SettingsType } from '../../../types';
 
 const service = ({ strapi }: { strapi: Core.Strapi }) => ({
-  getData: async (start: string, end: string): Promise<any[]> => {
+  getData: async (start: string, end: string, user: any): Promise<any[]> => {
     const pluginStore = getPluginStore();
     let config: SettingsType | null = await pluginStore.get({ key: 'settings' });
     if (!config) return [];
@@ -20,10 +20,10 @@ const service = ({ strapi }: { strapi: Core.Strapi }) => ({
 
     let data: Record<string, any> = {};
     if (startHandler) {
-      data = await startHandler(start, end, strapi, config);
+      data = await startHandler(start, end, strapi, config, user);
     }
     if (endHandler) {
-      data = merge(await endHandler(strapi, config, data), data);
+      data = merge(await endHandler(strapi, config, data, user), data);
     }
 
     // Filter out drafts if not configured to show them
