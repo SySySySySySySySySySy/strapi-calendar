@@ -111,8 +111,6 @@ export const initHandlers = (
 			}
 		}
 
-		// console.log(documents);
-
 		return filteredDocuments.reduce((acc: Record<string, any>, el: any) => {
 			acc[el.id] = el;
 			return acc;
