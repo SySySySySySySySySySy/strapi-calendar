@@ -69,9 +69,13 @@ export const initHandlers = (
     }
 
     // Fetch all documents matching the date range
+    const populateFields = ['createdBy'];
+    if (config.filterField) {
+      populateFields.push(config.filterField);
+    }
     const documents = await strapi.documents(config.collection).findMany({
       filters,
-      populate: ['createdBy', config.filterField],
+      populate: populateFields,
     });
 
     // Apply role-based filtering for non-super-admins
