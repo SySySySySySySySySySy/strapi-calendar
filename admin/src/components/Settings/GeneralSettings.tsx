@@ -243,33 +243,6 @@ const GeneralSettings = () => {
           </SingleSelect>
         </Field.Root>
       </Grid.Item>
-
-      <Grid.Item s={12}>
-        <Field.Root style={{ minWidth: 300 }}>
-          <Field.Label>
-            {formatMessage({
-              id: getTranslation('view.settings.section.general.drafts.label'),
-              defaultMessage: 'Display drafts',
-            })}
-          </Field.Label>
-          <Toggle
-            checked={settings.drafts}
-            offLabel={formatMessage({
-              id: getTranslation('view.settings.section.general.display-drafts.off'),
-              defaultMessage: 'Disabled',
-            })}
-            onLabel={formatMessage({
-              id: getTranslation('view.settings.section.general.display-drafts.on'),
-              defaultMessage: 'Enabled',
-            })}
-            onChange={(e: any) => {
-              updateField({
-                drafts: e.target.checked,
-              });
-            }}
-          />
-        </Field.Root>
-      </Grid.Item>
     </Grid.Root>
   );
 };
