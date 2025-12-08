@@ -6,6 +6,8 @@ const defaultSettings: SettingsType = {
   endField: null,
   titleField: null,
   colorField: null,
+  filterField: null,
+  filterEnabled: false,
   defaultDuration: 30,
   drafts: true,
   startHour: '9:00',

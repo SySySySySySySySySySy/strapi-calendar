@@ -5,6 +5,8 @@ export type SettingsType = {
   endField: null | string;
   titleField: null | string;
   colorField: null | string;
+  filterField: null | string;
+  filterEnabled: boolean;
   defaultDuration: number;
   drafts: boolean;
   startHour: string;

@@ -6,7 +6,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
     ctx.body = await strapi
       .plugin(PLUGIN_ID)
       .service('service')
-      .getData(ctx.query.start, ctx.query.end, ctx.state.user);
+      .getData(ctx.query.start, ctx.query.end, ctx.state.user, ctx.query.filter);
   },
   async getCollections(ctx) {
     try {

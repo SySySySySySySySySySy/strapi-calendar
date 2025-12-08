@@ -44,7 +44,8 @@ export const initHandlers = (
     endDate: string,
     strapi: any,
     config: SettingsType,
-    user: any
+    user: any,
+    filterValue?: string
   ) => {
     // Base filter for date range
     const filters: any = {
@@ -58,10 +59,19 @@ export const initHandlers = (
       ],
     };
 
+    // Apply filter by relation field if enabled and filterValue is provided
+    if (config.filterEnabled && config.filterField && filterValue) {
+      filters.$and.push({
+        [config.filterField]: {
+          documentId: filterValue,
+        },
+      });
+    }
+
     // Fetch all documents matching the date range
     const documents = await strapi.documents(config.collection).findMany({
       filters,
-      populate: ['createdBy'],
+      populate: ['createdBy', config.filterField],
     });
 
     // Apply role-based filtering for non-super-admins

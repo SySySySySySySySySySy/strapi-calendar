@@ -7,7 +7,7 @@ import { createDefaultConfig, getPluginStore, initHandlers } from '../utils';
 import { SettingsType } from '../../../types';
 
 const service = ({ strapi }: { strapi: Core.Strapi }) => ({
-  getData: async (start: string, end: string, user: any): Promise<any[]> => {
+  getData: async (start: string, end: string, user: any, filterValue?: string): Promise<any[]> => {
     const pluginStore = getPluginStore();
     let config: SettingsType | null = await pluginStore.get({ key: 'settings' });
     if (!config) return [];
@@ -20,7 +20,7 @@ const service = ({ strapi }: { strapi: Core.Strapi }) => ({
 
     let data: Record<string, any> = {};
     if (startHandler) {
-      data = await startHandler(start, end, strapi, config, user);
+      data = await startHandler(start, end, strapi, config, user, filterValue);
     }
     if (endHandler) {
       data = merge(await endHandler(strapi, config, data, user), data);

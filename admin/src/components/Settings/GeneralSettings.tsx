@@ -244,6 +244,62 @@ const GeneralSettings = () => {
         </Field.Root>
       </Grid.Item>
 
+      <Grid.Item col={3} s={12}>
+        <Field.Root style={{ width: '100%' }}>
+          <Field.Label>
+            {formatMessage({
+              id: getTranslation('view.settings.section.general.filter.label'),
+              defaultMessage: 'Choose your filter field (Relation)',
+            })}
+          </Field.Label>
+          <SingleSelect
+            onChange={(e: string) => updateField({ filterField: e })}
+            value={settings.filterField}
+          >
+            <SingleSelectOption value="">
+              {formatMessage({
+                id: getTranslation('view.settings.section.general.filter.none'),
+                defaultMessage: 'No filter field',
+              })}
+            </SingleSelectOption>
+            {fields
+              .filter((x) => x.type === 'relation')
+              .map((x) => (
+                <SingleSelectOption key={x.id} value={x.id}>
+                  {x.id}
+                </SingleSelectOption>
+              ))}
+          </SingleSelect>
+        </Field.Root>
+      </Grid.Item>
+
+      <Grid.Item s={12}>
+        <Field.Root style={{ minWidth: 300 }}>
+          <Field.Label>
+            {formatMessage({
+              id: getTranslation('view.settings.section.general.filter-enabled.label'),
+              defaultMessage: 'Enable filtering',
+            })}
+          </Field.Label>
+          <Toggle
+            checked={settings.filterEnabled}
+            offLabel={formatMessage({
+              id: getTranslation('view.settings.section.general.filter-enabled.off'),
+              defaultMessage: 'Disabled',
+            })}
+            onLabel={formatMessage({
+              id: getTranslation('view.settings.section.general.filter-enabled.on'),
+              defaultMessage: 'Enabled',
+            })}
+            onChange={(e: any) => {
+              updateField({
+                filterEnabled: e.target.checked,
+              });
+            }}
+          />
+        </Field.Root>
+      </Grid.Item>
+
       <Grid.Item s={12}>
         <Field.Root style={{ minWidth: 300 }}>
           <Field.Label>
