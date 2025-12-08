@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Layouts } from '@strapi/admin/strapi-admin';
 import { Cog, Plus } from '@strapi/icons';
 import tinyColor from 'tinycolor2';
@@ -10,17 +10,68 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import { useTheme } from 'styled-components';
+import type { EventSourceFunc } from '@fullcalendar/core';
 
 import { PLUGIN_ID } from '../pluginId';
 import { getTranslation } from '../utils/getTranslation';
 import Illo from '../components/Calendar/Illo';
 import { useSettings } from '../context/Settings';
 
+// Utility function to get JWT token from cookies
+const getJwtToken = (): string | null => {
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const trimmedCookie = cookie.trim();
+    const equalIndex = trimmedCookie.indexOf('=');
+    if (equalIndex === -1) continue;
+
+    const name = trimmedCookie.substring(0, equalIndex);
+    const value = trimmedCookie.substring(equalIndex + 1);
+
+    if (name === 'jwtToken') {
+      return decodeURIComponent(value);
+    }
+  }
+  return null;
+};
+
 const CalendarPage = () => {
   const theme = useTheme();
 
   const { settings, loading } = useSettings();
   const { formatMessage } = useIntl();
+
+  // Create event source function with JWT token in headers
+  const eventSource: EventSourceFunc = useMemo(
+    () => (fetchInfo, successCallback, failureCallback) => {
+      const jwtToken = getJwtToken();
+      const headers: Record<string, string> = {};
+
+      if (jwtToken) {
+        headers['Authorization'] = `Bearer ${jwtToken}`;
+      }
+
+      const url = new URL(`/${PLUGIN_ID}/`, window.location.origin);
+      url.searchParams.append('start', fetchInfo.startStr);
+      url.searchParams.append('end', fetchInfo.endStr);
+
+      fetch(url.toString(), { headers })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(
+              `Failed to fetch calendar events: ${response.status} ${response.statusText}`
+            );
+          }
+          return response.json();
+        })
+        .then((data) => successCallback(data))
+        .catch((error) => {
+          console.error('Error fetching calendar events:', error);
+          failureCallback(error);
+        });
+    },
+    []
+  );
 
   if (loading) return <Loader />;
   if (!settings.collection) {
@@ -172,7 +223,7 @@ const CalendarPage = () => {
         >
           <style>{sty}</style>
           <FullCalendar
-            events={`/${PLUGIN_ID}/`}
+            events={eventSource}
             plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
             initialView={initialView}
             slotMinTime={settings.startHour}
