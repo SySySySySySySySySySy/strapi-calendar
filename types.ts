@@ -1,10 +1,12 @@
-// Admin Types
+// Admin Types - Settings configuration for strapi-calendar plugin
 export type SettingsType = {
   collection: null | string;
   startField: null | string;
   endField: null | string;
   titleField: null | string;
   colorField: null | string;
+  filterField: null | string;
+  filterEnabled: boolean;
   defaultDuration: number;
   startHour: string;
   endHour: string;
