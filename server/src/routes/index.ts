@@ -5,6 +5,9 @@ export default [
     handler: 'controller.getData',
     config: {
       policies: [],
+      auth: {
+        scope: ['plugin::strapi-calendar.read'],
+      },
     },
   },
   {
