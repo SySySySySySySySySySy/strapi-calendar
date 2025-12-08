@@ -1,1 +1,5 @@
-export default {};
+import isSuperAdmin from './isSuperAdmin';
+
+export default {
+  isSuperAdmin,
+};
