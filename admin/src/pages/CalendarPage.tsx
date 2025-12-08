@@ -23,7 +23,7 @@ const getJwtToken = (): string | null => {
   for (const cookie of cookies) {
     const [name, value] = cookie.trim().split('=');
     if (name === 'jwtToken') {
-      return value;
+      return decodeURIComponent(value);
     }
   }
   return null;
@@ -52,7 +52,9 @@ const CalendarPage = () => {
       fetch(url.toString(), { headers })
         .then((response) => {
           if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error(
+              `Failed to fetch calendar events: ${response.status} ${response.statusText}`
+            );
           }
           return response.json();
         })
