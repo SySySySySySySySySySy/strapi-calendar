@@ -8,7 +8,6 @@ export type SettingsType = {
   filterField: null | string;
   filterEnabled: boolean;
   defaultDuration: number;
-  drafts: boolean;
   startHour: string;
   endHour: string;
   defaultView: string;

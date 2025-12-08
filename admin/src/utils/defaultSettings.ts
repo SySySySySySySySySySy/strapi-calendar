@@ -9,7 +9,6 @@ const defaultSettings: SettingsType = {
   filterField: null,
   filterEnabled: false,
   defaultDuration: 30,
-  drafts: true,
   startHour: '9:00',
   endHour: '18:00',
   defaultView: 'Month',
