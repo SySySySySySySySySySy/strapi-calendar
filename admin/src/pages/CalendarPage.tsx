@@ -21,7 +21,13 @@ import { useSettings } from '../context/Settings';
 const getJwtToken = (): string | null => {
   const cookies = document.cookie.split(';');
   for (const cookie of cookies) {
-    const [name, value] = cookie.trim().split('=');
+    const trimmedCookie = cookie.trim();
+    const equalIndex = trimmedCookie.indexOf('=');
+    if (equalIndex === -1) continue;
+
+    const name = trimmedCookie.substring(0, equalIndex);
+    const value = trimmedCookie.substring(equalIndex + 1);
+
     if (name === 'jwtToken') {
       return decodeURIComponent(value);
     }
