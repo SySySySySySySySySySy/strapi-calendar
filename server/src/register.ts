@@ -9,12 +9,6 @@ const register = ({ strapi }: { strapi: Core.Strapi }) => {
       uid: 'read',
       pluginName: 'strapi-calendar',
     },
-    {
-      section: 'plugins',
-      displayName: 'Access calendar settings',
-      uid: 'settings',
-      pluginName: 'strapi-calendar',
-    },
   ]);
 };
 
