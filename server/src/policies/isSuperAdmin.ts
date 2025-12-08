@@ -13,7 +13,7 @@ export default (policyContext: any, config: any, { strapi }: { strapi: Core.Stra
   }
 
   // Check if user has super admin role
-  const isSuperAdmin = user.roles?.some((role: any) => role.type === 'strapi-super-admin');
+  const isSuperAdmin = user.roles?.some((role: any) => role.type === 'strapi-super-admin') ?? false;
 
   return isSuperAdmin;
 };
