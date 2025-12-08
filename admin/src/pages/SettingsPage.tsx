@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layouts } from '@strapi/admin/strapi-admin';
-import { useNotification } from '@strapi/strapi/admin';
+import { Page, useNotification } from '@strapi/strapi/admin';
 import { Box, Button, Divider, Loader } from '@strapi/design-system';
 import { useIntl } from 'react-intl';
 import { Check } from '@strapi/icons';
@@ -10,6 +10,7 @@ import CalendarSettings from '../components/Settings/CalendarSettings';
 
 import { SettingsProvider, useSettings } from '../context/Settings';
 import { getTranslation } from '../utils/getTranslation';
+import pluginPermissions from '../permissions';
 
 const SettingsPage = () => {
   const { loading, saving, saveSettings, settings } = useSettings();
@@ -76,7 +77,7 @@ const SettingsPage = () => {
   };
 
   return (
-    <>
+    <Page.Protect permissions={pluginPermissions.accessSettings}>
       <Layouts.Header
         title={formatMessage({
           id: getTranslation('view.settings.title'),
@@ -122,7 +123,7 @@ const SettingsPage = () => {
           </Box>
         </Layouts.Content>
       )}
-    </>
+    </Page.Protect>
   );
 };
 

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Layouts } from '@strapi/admin/strapi-admin';
+import { Page } from '@strapi/strapi/admin';
 import { Cog, Plus } from '@strapi/icons';
 import tinyColor from 'tinycolor2';
 import { EmptyStateLayout, LinkButton, Box, Loader } from '@strapi/design-system';
@@ -16,6 +17,7 @@ import { PLUGIN_ID } from '../pluginId';
 import { getTranslation } from '../utils/getTranslation';
 import Illo from '../components/Calendar/Illo';
 import { useSettings } from '../context/Settings';
+import pluginPermissions from '../permissions';
 
 // Utility function to get JWT token from cookies
 const getJwtToken = (): string | null => {
@@ -76,7 +78,7 @@ const CalendarPage = () => {
   if (loading) return <Loader />;
   if (!settings.collection) {
     return (
-      <>
+      <Page.Protect permissions={pluginPermissions.accessCalendar}>
         <Layouts.Header
           title={formatMessage({ id: getTranslation('plugin.name'), defaultMessage: 'Calendar' })}
           subtitle={formatMessage({
@@ -106,7 +108,7 @@ const CalendarPage = () => {
             }
           />
         </Layouts.Content>
-      </>
+      </Page.Protect>
     );
   }
 
@@ -200,7 +202,7 @@ const CalendarPage = () => {
   `;
 
   return (
-    <>
+    <Page.Protect permissions={pluginPermissions.accessCalendar}>
       <Layouts.Header
         title={formatMessage({ id: getTranslation('plugin.name'), defaultMessage: 'Calendar' })}
         subtitle={formatMessage({
@@ -261,7 +263,7 @@ const CalendarPage = () => {
           />
         </Box>
       </Layouts.Content>
-    </>
+    </Page.Protect>
   );
 };
 
