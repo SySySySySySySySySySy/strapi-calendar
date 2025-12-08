@@ -58,25 +58,43 @@ export const initHandlers = (
       ],
     };
 
-    // Add user filter if user is not a super admin
+    // Fetch all documents matching the date range
+    const documents = await strapi.documents(config.collection).findMany({
+      filters,
+      populate: ['createdBy'],
+    });
+
+    // Apply role-based filtering for non-super-admins
+    let filteredDocuments = documents;
     if (user && user.roles) {
       const isSuperAdmin = user.roles.some(
         (role: any) => role.type === 'strapi-super-admin'
       );
       
-      // If not super admin, filter by createdBy
+      // If not super admin, filter by createdBy and role
       if (!isSuperAdmin) {
-        filters.$and.push({
-          createdBy: user.id,
+        // Get user's role IDs
+        const userRoleIds = user.roles.map((role: any) => role.id);
+        
+        // Get all users with the same role(s)
+        const usersWithSameRole = await strapi.documents('admin::user').findMany({
+          filters: {
+            roles: {
+              id: { $in: userRoleIds },
+            },
+          },
+        });
+        
+        const allowedUserIds = usersWithSameRole.map((u: any) => u.id);
+        
+        // Filter documents to only include those created by allowed users
+        filteredDocuments = documents.filter((doc: any) => {
+          return doc.createdBy && allowedUserIds.includes(doc.createdBy.id);
         });
       }
     }
 
-    return (
-      await strapi.documents(config.collection).findMany({
-        filters,
-      })
-    ).reduce((acc: Record<string, any>, el: any) => {
+    return filteredDocuments.reduce((acc: Record<string, any>, el: any) => {
       acc[el.id] = el;
       return acc;
     }, {});
