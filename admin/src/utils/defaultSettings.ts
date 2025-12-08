@@ -7,7 +7,6 @@ const defaultSettings: SettingsType = {
   titleField: null,
   colorField: null,
   defaultDuration: 30,
-  drafts: true,
   startHour: '9:00',
   endHour: '18:00',
   defaultView: 'Month',

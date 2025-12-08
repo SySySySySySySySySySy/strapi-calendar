@@ -26,9 +26,8 @@ const service = ({ strapi }: { strapi: Core.Strapi }) => ({
       data = merge(await endHandler(strapi, config, data, user), data);
     }
 
-    // Filter out drafts if not configured to show them
+    // Filter to show only published content
     const dataFiltered = Object.values(data).filter((x) => {
-      if (config.drafts) return true;
       return x.publishedAt;
     });
 
