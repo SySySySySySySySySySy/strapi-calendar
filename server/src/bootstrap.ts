@@ -1,7 +1,8 @@
-import type { Core } from '@strapi/strapi';
+import type { Core } from "@strapi/strapi";
+import { setupPermissions } from "./permissions";
 
-const bootstrap = ({ strapi }: { strapi: Core.Strapi }) => {
-  // bootstrap phase
+const bootstrap = async ({ strapi }: { strapi: Core.Strapi }) => {
+	await setupPermissions({ strapi });
 };
 
 export default bootstrap;
