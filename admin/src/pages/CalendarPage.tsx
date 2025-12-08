@@ -81,7 +81,13 @@ const CalendarPage = () => {
             // Map to filter options
             const options = (data?.results || []).map((item: any) => ({
               id: item.documentId,
-              label: item.id || item.documentId || 'Unknown',
+              label:
+                item.name ||
+                item.title ||
+                item.label ||
+                item.displayName ||
+                item.documentId ||
+                'Unknown',
             }));
 
             setFilterOptions(options);
