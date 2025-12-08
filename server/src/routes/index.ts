@@ -33,8 +33,10 @@ export default [
     path: '/settings',
     handler: 'controller.getSettings',
     config: {
-      policies: [],
-      auth: false,
+      policies: ['plugin::strapi-calendar.isSuperAdmin'],
+      auth: {
+        scope: ['plugin::strapi-calendar.settings'],
+      },
     },
   },
   {
@@ -42,8 +44,10 @@ export default [
     path: '/settings',
     handler: 'controller.setSettings',
     config: {
-      policies: [],
-      auth: false,
+      policies: ['plugin::strapi-calendar.isSuperAdmin'],
+      auth: {
+        scope: ['plugin::strapi-calendar.settings'],
+      },
     },
   },
   {
@@ -51,8 +55,10 @@ export default [
     path: '/clear-settings',
     handler: 'controller.clearSettings',
     config: {
-      policies: [],
-      auth: false,
+      policies: ['plugin::strapi-calendar.isSuperAdmin'],
+      auth: {
+        scope: ['plugin::strapi-calendar.settings'],
+      },
     },
   },
 ];
