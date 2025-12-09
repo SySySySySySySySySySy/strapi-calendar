@@ -59,11 +59,11 @@ export const initHandlers = (
 			],
 		};
 
-		// Apply filter by relation field if enabled and filterValue is provided
+		// Tambahkan filter jika diperlukan
 		if (config.filterEnabled && config.filterField && filterValue) {
 			filters.$and.push({
 				[config.filterField]: {
-					documentId: filterValue,
+					documentId: { $eq: String(filterValue) },
 				},
 			});
 		}
@@ -110,8 +110,6 @@ export const initHandlers = (
 				});
 			}
 		}
-
-		// console.log(documents);
 
 		return filteredDocuments.reduce((acc: Record<string, any>, el: any) => {
 			acc[el.id] = el;

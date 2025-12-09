@@ -7,14 +7,14 @@ import { Layouts, Page } from "@strapi/admin/strapi-admin";
 import {
 	Box,
 	EmptyStateLayout,
+	Field,
 	LinkButton,
 	Loader,
-	Field,
 	SingleSelect,
 	SingleSelectOption,
 } from "@strapi/design-system";
 import { Cog, Plus } from "@strapi/icons";
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useIntl } from "react-intl";
 import { useTheme } from "styled-components";
 import tinyColor from "tinycolor2";
@@ -53,7 +53,7 @@ const CalendarPage = () => {
 
 	// Fetch filter options when settings change
 	useEffect(() => {
-		if (settings.filterEnabled && settings.filterField && settings.collection) {
+		if (!!settings.filterEnabled && !!settings.filterField) {
 			const fetchFilterOptions = async () => {
 				const jwtToken = getJwtToken();
 				const headers: Record<string, string> = {};
@@ -64,44 +64,28 @@ const CalendarPage = () => {
 
 				try {
 					// Get the collection attributes to find the target collection for the relation
-					const collection = settings.collection;
-					const filterField = settings.filterField;
+					const filterField = settings.filterField!;
 
 					// Fetch the schema to understand the relation
 					const schemaResponse = await fetch(
-						`/content-manager/content-types/${collection}`,
+						`/content-manager/collection-types/api::${filterField}.${filterField}?page=1&pageSize=100`,
 						{
 							headers,
 						},
 					);
-					const schemaData = await schemaResponse.json();
+					const schemaData = (await schemaResponse.json()) as {
+						results: { id: number; documentId: string; name: string }[];
+					};
+					const options =
+						schemaData.results?.map((data) => {
+							return {
+								id: data.documentId,
+								label: data.name,
+							};
+						}) || [];
 
-					const relationAttribute =
-						schemaData?.data?.schema?.attributes?.[filterField];
-					const targetCollection = relationAttribute?.target;
-
-					if (targetCollection) {
-						// Fetch all documents from the target collection
-						const response = await fetch(
-							`/content-manager/collection-types/${targetCollection}?pageSize=100`,
-							{ headers },
-						);
-						const data = await response.json();
-
-						// Map to filter options
-						const options = (data?.results || []).map((item: any) => ({
-							id: item.documentId,
-							label:
-								item.name ||
-								item.title ||
-								item.label ||
-								item.displayName ||
-								item.documentId ||
-								"Unknown",
-						}));
-
-						setFilterOptions(options);
-					}
+					setFilterOptions(options);
+					setSelectedFilter(options[0]?.id || "");
 				} catch (error) {
 					console.error("Error fetching filter options:", error);
 				}
@@ -112,11 +96,15 @@ const CalendarPage = () => {
 			setFilterOptions([]);
 			setSelectedFilter("");
 		}
-	}, [settings.filterEnabled, settings.filterField, settings.collection]);
+	}, [settings.filterEnabled, settings.filterField]);
 
 	// Create event source function with JWT token in headers
 	const eventSource: EventSourceFunc = useMemo(
 		() => (fetchInfo, successCallback, failureCallback) => {
+			if (settings.filterEnabled && !selectedFilter) {
+				return;
+			}
+
 			const jwtToken = getJwtToken();
 			const headers: Record<string, string> = {};
 
@@ -232,6 +220,7 @@ const CalendarPage = () => {
 		<LinkButton
 			startIcon={<Plus color={"white"} />}
 			href={`/admin/content-manager/collection-types/${settings.collection}/create`}
+			style={{ color: "white" }}
 		>
 			{formatMessage(
 				{
@@ -311,47 +300,36 @@ const CalendarPage = () => {
 					defaultMessage: "Visualize your events",
 				})}
 				as="h2"
-				primaryAction={primaryAction}
+				primaryAction={
+					<Box paddingBottom={4} style={{ maxWidth: "300px" }}>
+						<Field.Root>
+							<Field.Label>
+								{formatMessage({
+									id: getTranslation("view.calendar.filter.label"),
+									defaultMessage: "Filter by",
+								})}{" "}
+								{settings.filterField}
+							</Field.Label>
+							<SingleSelect
+								onChange={(value: string) => {
+									setSelectedFilter(value);
+									setCalendarKey((prev) => prev + 1);
+								}}
+								value={selectedFilter}
+							>
+								{filterOptions.map((option) => (
+									<SingleSelectOption key={option.id} value={option.id}>
+										{option.label}
+									</SingleSelectOption>
+								))}
+							</SingleSelect>
+						</Field.Root>
+					</Box>
+				}
+				secondaryAction={primaryAction}
 			/>
 			<Layouts.Content>
-				{settings.filterEnabled &&
-					settings.filterField &&
-					filterOptions.length > 0 && (
-						<Box paddingBottom={4} style={{ maxWidth: "300px" }}>
-							<Field.Root>
-								<Field.Label>
-									{formatMessage({
-										id: getTranslation("view.calendar.filter.label"),
-										defaultMessage: "Filter by",
-									})}{" "}
-									{settings.filterField}
-								</Field.Label>
-								<SingleSelect
-									onChange={(value: string) => {
-										setSelectedFilter(value);
-										setCalendarKey((prev) => prev + 1);
-									}}
-									value={selectedFilter}
-									placeholder={formatMessage({
-										id: getTranslation("view.calendar.filter.placeholder"),
-										defaultMessage: "All",
-									})}
-								>
-									<SingleSelectOption value="">
-										{formatMessage({
-											id: getTranslation("view.calendar.filter.all"),
-											defaultMessage: "All",
-										})}
-									</SingleSelectOption>
-									{filterOptions.map((option) => (
-										<SingleSelectOption key={option.id} value={option.id}>
-											{option.label}
-										</SingleSelectOption>
-									))}
-								</SingleSelect>
-							</Field.Root>
-						</Box>
-					)}
+				<Box padding={1} />
 				<Box
 					background={"neutral0"}
 					shadow="filterShadow"
@@ -360,6 +338,7 @@ const CalendarPage = () => {
 					style={{
 						zIndex: 0,
 						position: "relative",
+						marginBottom: "16px",
 					}}
 				>
 					<style>{sty}</style>
@@ -371,6 +350,19 @@ const CalendarPage = () => {
 						slotMinTime={settings.startHour}
 						slotMaxTime={settings.endHour}
 						allDaySlot={false}
+						timeZone="local"
+						eventTimeFormat={{
+							hour: "2-digit",
+							minute: "2-digit",
+							hour12: false,
+							timeZoneName: "long",
+						}}
+						height={"auto"}
+						headerToolbar={{
+							start: left,
+							center: "title",
+							right: views,
+						}}
 						views={{
 							workWeek: {
 								type: "timeGrid",
@@ -389,16 +381,6 @@ const CalendarPage = () => {
 									defaultMessage: "Day View",
 								}),
 							},
-						}}
-						height={"auto"}
-						locale={formatMessage({
-							id: getTranslation("view.calendar.locale"),
-							defaultMessage: "en-US",
-						})}
-						headerToolbar={{
-							left,
-							center: "title",
-							right: views,
 						}}
 					/>
 				</Box>

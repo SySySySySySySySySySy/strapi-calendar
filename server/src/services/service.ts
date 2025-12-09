@@ -14,7 +14,7 @@ const service = ({ strapi }: { strapi: Core.Strapi }) => ({
 		filterValue?: string,
 	): Promise<any[]> => {
 		const pluginStore = getPluginStore();
-		let config: SettingsType | null = await pluginStore.get({
+		const config: SettingsType | null = await pluginStore.get({
 			key: "settings",
 		});
 		if (!config) return [];
@@ -30,7 +30,10 @@ const service = ({ strapi }: { strapi: Core.Strapi }) => ({
 			data = await startHandler(start, end, strapi, config, user, filterValue);
 		}
 		if (endHandler) {
-			data = merge(await endHandler(strapi, config, data, user), data);
+			data = merge(
+				await endHandler(strapi, config, data, user, filterValue),
+				data,
+			);
 		}
 
 		// Map data into the required format
