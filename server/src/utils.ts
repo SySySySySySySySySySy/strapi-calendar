@@ -45,6 +45,7 @@ export const initHandlers = (
 		strapi: any,
 		config: SettingsType,
 		user: any,
+		filterValue?: string,
 	) => {
 		// Base filter for date range
 		const filters: any = {
@@ -58,10 +59,23 @@ export const initHandlers = (
 			],
 		};
 
+		// Tambahkan filter jika diperlukan
+		if (config.filterEnabled && config.filterField && filterValue) {
+			filters.$and.push({
+				[config.filterField]: {
+					documentId: { $eq: String(filterValue) },
+				},
+			});
+		}
+
 		// Fetch all documents matching the date range
+		const populateFields = ["createdBy"];
+		if (config.filterField) {
+			populateFields.push(config.filterField);
+		}
 		const documents = await strapi.documents(config.collection).findMany({
 			filters,
-			populate: ["createdBy"],
+			populate: populateFields,
 			status: "published",
 		});
 
@@ -96,8 +110,6 @@ export const initHandlers = (
 				});
 			}
 		}
-
-		// console.log(documents);
 
 		return filteredDocuments.reduce((acc: Record<string, any>, el: any) => {
 			acc[el.id] = el;

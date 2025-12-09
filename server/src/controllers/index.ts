@@ -1,5 +1,7 @@
-import controller from './controller';
+import controller from "./controller";
+import schedule from "./schedule";
 
 export default {
-  controller,
+	controller,
+	schedule,
 };

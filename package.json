@@ -55,7 +55,8 @@
     "react-color": "^2.19.3",
     "react-intl": "^6.6.8",
     "tinycolor2": "^1.6.0",
-    "validate-color": "^2.2.1"
+    "validate-color": "^2.2.1",
+    "zod": "^4.1.13"
   },
   "devDependencies": {
     "@strapi/sdk-plugin": "^5.2.6",

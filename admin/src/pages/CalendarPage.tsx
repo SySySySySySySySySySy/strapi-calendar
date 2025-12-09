@@ -7,11 +7,14 @@ import { Layouts, Page } from "@strapi/admin/strapi-admin";
 import {
 	Box,
 	EmptyStateLayout,
+	Field,
 	LinkButton,
 	Loader,
+	SingleSelect,
+	SingleSelectOption,
 } from "@strapi/design-system";
 import { Cog, Plus } from "@strapi/icons";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useIntl } from "react-intl";
 import { useTheme } from "styled-components";
 import tinyColor from "tinycolor2";
@@ -42,10 +45,66 @@ const CalendarPage = () => {
 	const { settings, loading } = useSettings();
 	const { formatMessage } = useIntl();
 	const theme = useTheme();
+	const [selectedFilter, setSelectedFilter] = useState<string>("");
+	const [filterOptions, setFilterOptions] = useState<
+		Array<{ id: string; label: string }>
+	>([]);
+	const [calendarKey, setCalendarKey] = useState(0);
+
+	// Fetch filter options when settings change
+	useEffect(() => {
+		if (!!settings.filterEnabled && !!settings.filterField) {
+			const fetchFilterOptions = async () => {
+				const jwtToken = getJwtToken();
+				const headers: Record<string, string> = {};
+
+				if (jwtToken) {
+					headers["Authorization"] = `Bearer ${jwtToken}`;
+				}
+
+				try {
+					// Get the collection attributes to find the target collection for the relation
+					const filterField = settings.filterField!;
+
+					// Fetch the schema to understand the relation
+					const schemaResponse = await fetch(
+						`/content-manager/collection-types/api::${filterField}.${filterField}?page=1&pageSize=100`,
+						{
+							headers,
+						},
+					);
+					const schemaData = (await schemaResponse.json()) as {
+						results: { id: number; documentId: string; name: string }[];
+					};
+					const options =
+						schemaData.results?.map((data) => {
+							return {
+								id: data.documentId,
+								label: data.name,
+							};
+						}) || [];
+
+					setFilterOptions(options);
+					setSelectedFilter(options[0]?.id || "");
+				} catch (error) {
+					console.error("Error fetching filter options:", error);
+				}
+			};
+
+			fetchFilterOptions();
+		} else {
+			setFilterOptions([]);
+			setSelectedFilter("");
+		}
+	}, [settings.filterEnabled, settings.filterField]);
 
 	// Create event source function with JWT token in headers
 	const eventSource: EventSourceFunc = useMemo(
 		() => (fetchInfo, successCallback, failureCallback) => {
+			if (settings.filterEnabled && !selectedFilter) {
+				return;
+			}
+
 			const jwtToken = getJwtToken();
 			const headers: Record<string, string> = {};
 
@@ -56,6 +115,11 @@ const CalendarPage = () => {
 			const url = new URL(`/${PLUGIN_ID}/`, window.location.origin);
 			url.searchParams.append("start", fetchInfo.startStr);
 			url.searchParams.append("end", fetchInfo.endStr);
+
+			// Add filter parameter if enabled and selected
+			if (settings.filterEnabled && selectedFilter) {
+				url.searchParams.append("filter", selectedFilter);
+			}
 
 			fetch(url.toString(), { headers })
 				.then((response) => {
@@ -72,7 +136,7 @@ const CalendarPage = () => {
 					failureCallback(error);
 				});
 		},
-		[],
+		[selectedFilter, settings.filterEnabled],
 	);
 
 	if (loading) return <Loader />;
@@ -156,6 +220,7 @@ const CalendarPage = () => {
 		<LinkButton
 			startIcon={<Plus color={"white"} />}
 			href={`/admin/content-manager/collection-types/${settings.collection}/create`}
+			style={{ color: "white" }}
 		>
 			{formatMessage(
 				{
@@ -235,9 +300,36 @@ const CalendarPage = () => {
 					defaultMessage: "Visualize your events",
 				})}
 				as="h2"
-				primaryAction={primaryAction}
+				primaryAction={
+					<Box paddingBottom={4} style={{ maxWidth: "300px" }}>
+						<Field.Root>
+							<Field.Label>
+								{formatMessage({
+									id: getTranslation("view.calendar.filter.label"),
+									defaultMessage: "Filter by",
+								})}{" "}
+								{settings.filterField}
+							</Field.Label>
+							<SingleSelect
+								onChange={(value: string) => {
+									setSelectedFilter(value);
+									setCalendarKey((prev) => prev + 1);
+								}}
+								value={selectedFilter}
+							>
+								{filterOptions.map((option) => (
+									<SingleSelectOption key={option.id} value={option.id}>
+										{option.label}
+									</SingleSelectOption>
+								))}
+							</SingleSelect>
+						</Field.Root>
+					</Box>
+				}
+				secondaryAction={primaryAction}
 			/>
 			<Layouts.Content>
+				<Box padding={1} />
 				<Box
 					background={"neutral0"}
 					shadow="filterShadow"
@@ -246,16 +338,31 @@ const CalendarPage = () => {
 					style={{
 						zIndex: 0,
 						position: "relative",
+						marginBottom: "16px",
 					}}
 				>
 					<style>{sty}</style>
 					<FullCalendar
+						key={calendarKey}
 						events={eventSource}
 						plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
 						initialView={initialView}
 						slotMinTime={settings.startHour}
 						slotMaxTime={settings.endHour}
 						allDaySlot={false}
+						timeZone="local"
+						eventTimeFormat={{
+							hour: "2-digit",
+							minute: "2-digit",
+							hour12: false,
+							timeZoneName: "long",
+						}}
+						height={"auto"}
+						headerToolbar={{
+							start: left,
+							center: "title",
+							right: views,
+						}}
 						views={{
 							workWeek: {
 								type: "timeGrid",
@@ -274,16 +381,6 @@ const CalendarPage = () => {
 									defaultMessage: "Day View",
 								}),
 							},
-						}}
-						height={"auto"}
-						locale={formatMessage({
-							id: getTranslation("view.calendar.locale"),
-							defaultMessage: "en-US",
-						})}
-						headerToolbar={{
-							left,
-							center: "title",
-							right: views,
 						}}
 					/>
 				</Box>
