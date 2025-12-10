@@ -109,6 +109,97 @@ const service = ({ strapi }: { strapi: Core.Strapi }) => ({
 		await pluginStore.set({ key: "settings", value: null });
 		return pluginStore.get({ key: "settings" });
 	},
+
+	/**
+	 * Creates a new event in the configured collection.
+	 */
+	createEvent: async (eventData: any, user: any): Promise<any> => {
+		const pluginStore = getPluginStore();
+		const config: SettingsType | null = await pluginStore.get({
+			key: "settings",
+		});
+		if (!config || !config.collection) {
+			throw new Error("Calendar not configured");
+		}
+
+		// Map event data to collection fields
+		const data: any = {};
+		if (config.titleField) {
+			data[config.titleField] = eventData.title;
+		}
+		if (config.startField) {
+			data[config.startField] = eventData.start;
+		}
+		if (config.endField) {
+			data[config.endField] = eventData.end;
+		}
+		// Store description if there's a suitable field
+		if (eventData.description) {
+			data.description = eventData.description;
+		}
+
+		const result = await strapi.documents(config.collection as any).create({
+			data,
+			status: "published",
+		});
+
+		return result;
+	},
+
+	/**
+	 * Updates an existing event in the configured collection.
+	 */
+	updateEvent: async (id: string, eventData: any, user: any): Promise<any> => {
+		const pluginStore = getPluginStore();
+		const config: SettingsType | null = await pluginStore.get({
+			key: "settings",
+		});
+		if (!config || !config.collection) {
+			throw new Error("Calendar not configured");
+		}
+
+		// Map event data to collection fields
+		const data: any = {};
+		if (config.titleField && eventData.title) {
+			data[config.titleField] = eventData.title;
+		}
+		if (config.startField && eventData.start) {
+			data[config.startField] = eventData.start;
+		}
+		if (config.endField && eventData.end) {
+			data[config.endField] = eventData.end;
+		}
+		// Store description if there's a suitable field
+		if (eventData.description !== undefined) {
+			data.description = eventData.description;
+		}
+
+		const result = await strapi.documents(config.collection as any).update({
+			documentId: id,
+			data,
+		});
+
+		return result;
+	},
+
+	/**
+	 * Deletes an event from the configured collection.
+	 */
+	deleteEvent: async (id: string, user: any): Promise<any> => {
+		const pluginStore = getPluginStore();
+		const config: SettingsType | null = await pluginStore.get({
+			key: "settings",
+		});
+		if (!config || !config.collection) {
+			throw new Error("Calendar not configured");
+		}
+
+		const result = await strapi.documents(config.collection as any).delete({
+			documentId: id,
+		});
+
+		return result;
+	},
 });
 
 export default service;

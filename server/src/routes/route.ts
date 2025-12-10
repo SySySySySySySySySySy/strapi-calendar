@@ -55,6 +55,39 @@ const MainRoutes = [
 			auth: false,
 		},
 	},
+	{
+		method: "POST",
+		path: "/events",
+		handler: "controller.createEvent",
+		config: {
+			policies: [],
+			auth: {
+				scope: ["plugin::strapi-calendar.create"],
+			},
+		},
+	},
+	{
+		method: "PUT",
+		path: "/events/:id",
+		handler: "controller.updateEvent",
+		config: {
+			policies: [],
+			auth: {
+				scope: ["plugin::strapi-calendar.update"],
+			},
+		},
+	},
+	{
+		method: "DELETE",
+		path: "/events/:id",
+		handler: "controller.deleteEvent",
+		config: {
+			policies: [],
+			auth: {
+				scope: ["plugin::strapi-calendar.delete"],
+			},
+		},
+	},
 ];
 
 export default MainRoutes;

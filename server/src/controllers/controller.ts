@@ -63,6 +63,40 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => ({
 			ctx.throw(500, err);
 		}
 	},
+	async createEvent(ctx) {
+		const { body } = ctx.request;
+		try {
+			ctx.body = await strapi
+				.plugin(PLUGIN_ID)
+				.service("service")
+				.createEvent(body, ctx.state.user);
+		} catch (err) {
+			ctx.throw(500, err);
+		}
+	},
+	async updateEvent(ctx) {
+		const { id } = ctx.params;
+		const { body } = ctx.request;
+		try {
+			ctx.body = await strapi
+				.plugin(PLUGIN_ID)
+				.service("service")
+				.updateEvent(id, body, ctx.state.user);
+		} catch (err) {
+			ctx.throw(500, err);
+		}
+	},
+	async deleteEvent(ctx) {
+		const { id } = ctx.params;
+		try {
+			ctx.body = await strapi
+				.plugin(PLUGIN_ID)
+				.service("service")
+				.deleteEvent(id, ctx.state.user);
+		} catch (err) {
+			ctx.throw(500, err);
+		}
+	},
 });
 
 export default controller;

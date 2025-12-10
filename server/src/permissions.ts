@@ -5,6 +5,10 @@ const permissions = {
 	plugin: {
 		calendar: "calendar",
 		settings: "settings",
+		read: "read",
+		create: "create",
+		update: "update",
+		delete: "delete",
 	},
 };
 
@@ -21,6 +25,30 @@ export const setupPermissions = async ({ strapi }: { strapi: Core.Strapi }) => {
 			section: "plugins",
 			displayName: "Settings",
 			uid: permissions.plugin.settings,
+			pluginName: "strapi-calendar",
+		},
+		{
+			section: "plugins",
+			displayName: "Read",
+			uid: permissions.plugin.read,
+			pluginName: "strapi-calendar",
+		},
+		{
+			section: "plugins",
+			displayName: "Create",
+			uid: permissions.plugin.create,
+			pluginName: "strapi-calendar",
+		},
+		{
+			section: "plugins",
+			displayName: "Update",
+			uid: permissions.plugin.update,
+			pluginName: "strapi-calendar",
+		},
+		{
+			section: "plugins",
+			displayName: "Delete",
+			uid: permissions.plugin.delete,
 			pluginName: "strapi-calendar",
 		},
 	];

@@ -12,16 +12,20 @@ import {
 	Loader,
 	SingleSelect,
 	SingleSelectOption,
+	Button,
 } from "@strapi/design-system";
 import { Cog, Plus } from "@strapi/icons";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useIntl } from "react-intl";
 import { useTheme } from "styled-components";
 import tinyColor from "tinycolor2";
 import Illo from "../components/Calendar/Illo";
+import EventModal, { type EventFormData } from "../components/Calendar/EventModal";
+import EventPreviewModal from "../components/Calendar/EventPreviewModal";
 import { useSettings } from "../context/Settings";
 import { PLUGIN_ID } from "../pluginId";
 import { getTranslation } from "../utils/getTranslation";
+import api from "../api";
 
 // Utility function to get JWT token from cookies
 const getJwtToken = (): string | null => {
@@ -50,6 +54,14 @@ const CalendarPage = () => {
 		Array<{ id: string; label: string }>
 	>([]);
 	const [calendarKey, setCalendarKey] = useState(0);
+	const calendarRef = useRef<any>(null);
+
+	// Modal states
+	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+	const [selectedEvent, setSelectedEvent] = useState<any>(null);
+	const [editEventData, setEditEventData] = useState<EventFormData | null>(null);
 
 	// Fetch filter options when settings change
 	useEffect(() => {
@@ -139,6 +151,66 @@ const CalendarPage = () => {
 		[selectedFilter, settings.filterEnabled],
 	);
 
+	// Handle event click
+	const handleEventClick = (clickInfo: any) => {
+		setSelectedEvent(clickInfo.event);
+		setIsPreviewModalOpen(true);
+	};
+
+	// Handle create event
+	const handleCreateEvent = async (eventData: EventFormData) => {
+		try {
+			await api.createEvent(eventData);
+			// Refresh calendar
+			setCalendarKey((prev) => prev + 1);
+		} catch (error) {
+			console.error("Error creating event:", error);
+		}
+	};
+
+	// Handle update event
+	const handleUpdateEvent = async (eventData: EventFormData) => {
+		try {
+			if (eventData.id) {
+				await api.updateEvent(eventData.id, eventData);
+				// Refresh calendar
+				setCalendarKey((prev) => prev + 1);
+			}
+		} catch (error) {
+			console.error("Error updating event:", error);
+		}
+	};
+
+	// Handle delete event
+	const handleDeleteEvent = async () => {
+		try {
+			if (selectedEvent?.id) {
+				await api.deleteEvent(selectedEvent.id);
+				setIsPreviewModalOpen(false);
+				setSelectedEvent(null);
+				// Refresh calendar
+				setCalendarKey((prev) => prev + 1);
+			}
+		} catch (error) {
+			console.error("Error deleting event:", error);
+		}
+	};
+
+	// Handle edit button from preview
+	const handleEditFromPreview = () => {
+		// Prepare event data for editing
+		const eventData: EventFormData = {
+			id: selectedEvent.id,
+			title: selectedEvent.title,
+			start: selectedEvent.startStr,
+			end: selectedEvent.endStr,
+			description: selectedEvent.extendedProps?.description || "",
+		};
+		setEditEventData(eventData);
+		setIsPreviewModalOpen(false);
+		setIsEditModalOpen(true);
+	};
+
 	if (loading) return <Loader />;
 	if (!settings.collection) {
 		return (
@@ -217,10 +289,9 @@ const CalendarPage = () => {
 						: "dayGridMonth";
 
 	const primaryAction = settings.createButton ? (
-		<LinkButton
-			startIcon={<Plus color={"white"} />}
-			href={`/admin/content-manager/collection-types/${settings.collection}/create`}
-			style={{ color: "white" }}
+		<Button
+			startIcon={<Plus />}
+			onClick={() => setIsCreateModalOpen(true)}
 		>
 			{formatMessage(
 				{
@@ -229,7 +300,7 @@ const CalendarPage = () => {
 				},
 				{ collection: settings.collection?.split(".")[1] },
 			)}
-		</LinkButton>
+		</Button>
 	) : (
 		<div />
 	);
@@ -343,6 +414,7 @@ const CalendarPage = () => {
 				>
 					<style>{sty}</style>
 					<FullCalendar
+						ref={calendarRef}
 						key={calendarKey}
 						events={eventSource}
 						plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
@@ -382,8 +454,41 @@ const CalendarPage = () => {
 								}),
 							},
 						}}
+						eventClick={handleEventClick}
 					/>
 				</Box>
+
+				{/* Event Modals */}
+				<EventModal
+					isOpen={isCreateModalOpen}
+					onClose={() => setIsCreateModalOpen(false)}
+					onSubmit={handleCreateEvent}
+					mode="create"
+					settings={settings}
+				/>
+
+				<EventModal
+					isOpen={isEditModalOpen}
+					onClose={() => {
+						setIsEditModalOpen(false);
+						setEditEventData(null);
+					}}
+					onSubmit={handleUpdateEvent}
+					initialData={editEventData}
+					mode="edit"
+					settings={settings}
+				/>
+
+				<EventPreviewModal
+					isOpen={isPreviewModalOpen}
+					onClose={() => {
+						setIsPreviewModalOpen(false);
+						setSelectedEvent(null);
+					}}
+					onEdit={handleEditFromPreview}
+					onDelete={handleDeleteEvent}
+					event={selectedEvent}
+				/>
 			</Layouts.Content>
 		</>
 	);
