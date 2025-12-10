@@ -14,6 +14,15 @@ const api = {
   setSettings: async (data: any) => {
     return axios.post(`/${PLUGIN_ID}/settings`, data);
   },
+  createEvent: async (eventData: any) => {
+    return axios.post(`/${PLUGIN_ID}/events`, eventData);
+  },
+  updateEvent: async (eventId: string, eventData: any) => {
+    return axios.put(`/${PLUGIN_ID}/events/${eventId}`, eventData);
+  },
+  deleteEvent: async (eventId: string) => {
+    return axios.delete(`/${PLUGIN_ID}/events/${eventId}`);
+  },
 };
 
 export default api;

@@ -1,27 +1,27 @@
-import moment from "moment";
+import moment from 'moment';
 
-import { PLUGIN_ID } from "../../admin/src/pluginId";
-import defaultSettings from "../../admin/src/utils/defaultSettings";
-import type { SettingsType } from "../../types";
+import { PLUGIN_ID } from '../../admin/src/pluginId';
+import defaultSettings from '../../admin/src/utils/defaultSettings';
+import type { SettingsType } from '../../types';
 
 /**
  * Retrieves the plugin store for this plugin.
  */
 export const getPluginStore = (): any => {
-	return strapi.store({
-		environment: "",
-		type: "plugin",
-		name: PLUGIN_ID,
-	});
+  return strapi.store({
+    environment: '',
+    type: 'plugin',
+    name: PLUGIN_ID,
+  });
 };
 
 /**
  * Creates the default plugin configuration in the store if not already set.
  */
 export const createDefaultConfig = async (): Promise<SettingsType> => {
-	const pluginStore = getPluginStore();
-	await pluginStore.set({ key: "settings", value: defaultSettings });
-	return pluginStore.get({ key: "settings" });
+  const pluginStore = getPluginStore();
+  await pluginStore.set({ key: 'settings', value: defaultSettings });
+  return pluginStore.get({ key: 'settings' });
 };
 
 /**
@@ -34,100 +34,98 @@ export const createDefaultConfig = async (): Promise<SettingsType> => {
  * @returns {[Function | undefined, Function | undefined]} Array containing startHandler and endHandler functions.
  */
 export const initHandlers = (
-	start: string,
-	end: string,
-	extensions: Record<string, any>,
+  start: string,
+  end: string,
+  extensions: Record<string, any>
 ): [Function | undefined, Function | undefined] => {
-	// Default start handler
-	let startHandler: Function = async (
-		startDate: string,
-		endDate: string,
-		strapi: any,
-		config: SettingsType,
-		user: any,
-		filterValue?: string,
-	) => {
-		// Base filter for date range
-		const filters: any = {
-			$and: [
-				{
-					[config.startField]: {
-						$gte: moment(startDate).startOf("day").format(),
-						$lte: moment(endDate).endOf("day").format(),
-					},
-				},
-			],
-		};
+  // Default start handler
+  let startHandler: Function = async (
+    startDate: string,
+    endDate: string,
+    strapi: any,
+    config: SettingsType,
+    user: any,
+    filterValue?: string
+  ) => {
+    // Base filter for date range
+    const filters: any = {
+      $and: [
+        {
+          [config.startField]: {
+            $gte: moment(startDate).startOf('day').format(),
+            $lte: moment(endDate).endOf('day').format(),
+          },
+        },
+      ],
+    };
 
-		// Tambahkan filter jika diperlukan
-		if (config.filterEnabled && config.filterField && filterValue) {
-			filters.$and.push({
-				[config.filterField]: {
-					documentId: { $eq: String(filterValue) },
-				},
-			});
-		}
+    // Tambahkan filter jika diperlukan
+    if (config.filterEnabled && config.filterField && filterValue) {
+      filters.$and.push({
+        [config.filterField]: {
+          documentId: { $eq: String(filterValue) },
+        },
+      });
+    }
 
-		// Fetch all documents matching the date range
-		const populateFields = ["createdBy"];
-		if (config.filterField) {
-			populateFields.push(config.filterField);
-		}
-		const documents = await strapi.documents(config.collection).findMany({
-			filters,
-			populate: populateFields,
-			status: "published",
-		});
+    // Fetch all documents matching the date range
+    const populateFields = ['createdBy'];
+    if (config.filterField) {
+      populateFields.push(config.filterField);
+    }
+    const documents = await strapi.documents(config.collection).findMany({
+      filters,
+      populate: populateFields,
+      status: 'published',
+    });
 
-		// Apply role-based filtering for non-super-admins
-		let filteredDocuments = documents;
-		if (!!user && !!user.roles) {
-			const isSuperAdmin = user.roles.some(
-				(role: { code: string }) => role.code === "strapi-super-admin",
-			);
+    // Apply role-based filtering for non-super-admins
+    let filteredDocuments = documents;
+    if (!!user && !!user.roles) {
+      const isSuperAdmin = user.roles.some(
+        (role: { code: string }) => role.code === 'strapi-super-admin'
+      );
 
-			// If not super admin, filter by createdBy and role
-			if (!isSuperAdmin) {
-				// Get user's role IDs
-				const userRoleIds = user.roles.map((role: { id: number }) => role.id);
+      // If not super admin, filter by createdBy and role
+      if (!isSuperAdmin) {
+        // Get user's role IDs
+        const userRoleIds = user.roles.map((role: { id: number }) => role.id);
 
-				// Get all users with the same role(s)
-				const usersWithSameRole = await strapi
-					.documents("admin::user")
-					.findMany({
-						filters: {
-							roles: {
-								id: { $in: userRoleIds },
-							},
-						},
-					});
+        // Get all users with the same role(s)
+        const usersWithSameRole = await strapi.documents('admin::user').findMany({
+          filters: {
+            roles: {
+              id: { $in: userRoleIds },
+            },
+          },
+        });
 
-				const allowedUserIds = usersWithSameRole.map((u: any) => u.id);
+        const allowedUserIds = usersWithSameRole.map((u: any) => u.id);
 
-				// Filter documents to only include those created by allowed users
-				filteredDocuments = documents.filter((doc: any) => {
-					return doc.createdBy && allowedUserIds.includes(doc.createdBy.id);
-				});
-			}
-		}
+        // Filter documents to only include those created by allowed users
+        filteredDocuments = documents.filter((doc: any) => {
+          return doc.createdBy && allowedUserIds.includes(doc.createdBy.id);
+        });
+      }
+    }
 
-		return filteredDocuments.reduce((acc: Record<string, any>, el: any) => {
-			acc[el.id] = el;
-			return acc;
-		}, {});
-	};
+    return filteredDocuments.reduce((acc: Record<string, any>, el: any) => {
+      acc[el.id] = el;
+      return acc;
+    }, {});
+  };
 
-	let endHandler: Function | undefined;
+  let endHandler: Function | undefined;
 
-	// Override handlers if matching extension is found
-	Object.entries(extensions).forEach(([id, extension]) => {
-		if (id && start.startsWith(id)) {
-			startHandler = extension.startHandler;
-		}
-		if (id && end.startsWith(id)) {
-			endHandler = extension.endHandler;
-		}
-	});
+  // Override handlers if matching extension is found
+  Object.entries(extensions).forEach(([id, extension]) => {
+    if (id && start.startsWith(id)) {
+      startHandler = extension.startHandler;
+    }
+    if (id && end.startsWith(id)) {
+      endHandler = extension.endHandler;
+    }
+  });
 
-	return [startHandler, endHandler];
+  return [startHandler, endHandler];
 };
