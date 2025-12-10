@@ -4,12 +4,25 @@ import moment from 'moment';
 import { useIntl } from 'react-intl';
 import { getTranslation } from '../../utils/getTranslation';
 
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  startStr?: string;
+  endStr?: string;
+  extendedProps?: {
+    description?: string;
+    [key: string]: any;
+  };
+}
+
 interface EventPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  event: any;
+  event: CalendarEvent | null;
 }
 
 const EventPreviewModal = ({

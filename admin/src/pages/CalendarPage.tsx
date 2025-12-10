@@ -21,7 +21,7 @@ import { useTheme } from 'styled-components';
 import tinyColor from 'tinycolor2';
 import Illo from '../components/Calendar/Illo';
 import EventModal, { type EventFormData } from '../components/Calendar/EventModal';
-import EventPreviewModal from '../components/Calendar/EventPreviewModal';
+import EventPreviewModal, { type CalendarEvent } from '../components/Calendar/EventPreviewModal';
 import { useSettings } from '../context/Settings';
 import { PLUGIN_ID } from '../pluginId';
 import { getTranslation } from '../utils/getTranslation';
@@ -58,7 +58,7 @@ const CalendarPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [editEventData, setEditEventData] = useState<EventFormData | null>(null);
 
   // Fetch filter options when settings change
@@ -196,12 +196,14 @@ const CalendarPage = () => {
 
   // Handle edit button from preview
   const handleEditFromPreview = () => {
+    if (!selectedEvent) return;
+
     // Prepare event data for editing
     const eventData: EventFormData = {
       id: selectedEvent.id,
       title: selectedEvent.title,
-      start: selectedEvent.startStr,
-      end: selectedEvent.endStr,
+      start: selectedEvent.startStr || selectedEvent.start,
+      end: selectedEvent.endStr || selectedEvent.end,
       description: selectedEvent.extendedProps?.description || '',
     };
     setEditEventData(eventData);
@@ -447,7 +449,6 @@ const CalendarPage = () => {
           onClose={() => setIsCreateModalOpen(false)}
           onSubmit={handleCreateEvent}
           mode="create"
-          settings={settings}
         />
 
         <EventModal
@@ -459,7 +460,6 @@ const CalendarPage = () => {
           onSubmit={handleUpdateEvent}
           initialData={editEventData}
           mode="edit"
-          settings={settings}
         />
 
         <EventPreviewModal

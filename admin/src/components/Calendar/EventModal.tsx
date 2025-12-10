@@ -10,7 +10,6 @@ interface EventModalProps {
   onSubmit: (eventData: EventFormData) => void;
   initialData?: EventFormData | null;
   mode: 'create' | 'edit';
-  settings: any;
 }
 
 export interface EventFormData {
@@ -22,14 +21,7 @@ export interface EventFormData {
   [key: string]: any;
 }
 
-const EventModal = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  initialData,
-  mode,
-  settings,
-}: EventModalProps) => {
+const EventModal = ({ isOpen, onClose, onSubmit, initialData, mode }: EventModalProps) => {
   const { formatMessage } = useIntl();
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
@@ -37,6 +29,7 @@ const EventModal = ({
     end: moment().add(1, 'hour').format('YYYY-MM-DDTHH:mm'),
     description: '',
   });
+  const [errors, setErrors] = useState<{ title?: string; start?: string; end?: string }>({});
 
   useEffect(() => {
     if (initialData) {
@@ -53,11 +46,43 @@ const EventModal = ({
         description: '',
       });
     }
+    setErrors({});
   }, [initialData, isOpen]);
 
   const handleSubmit = () => {
     // Validate form
-    if (!formData.title || !formData.start || !formData.end) {
+    const newErrors: { title?: string; start?: string; end?: string } = {};
+
+    if (!formData.title) {
+      newErrors.title = formatMessage({
+        id: getTranslation('modal.event.error.title.required'),
+        defaultMessage: 'Title is required',
+      });
+    }
+
+    if (!formData.start) {
+      newErrors.start = formatMessage({
+        id: getTranslation('modal.event.error.start.required'),
+        defaultMessage: 'Start date is required',
+      });
+    }
+
+    if (!formData.end) {
+      newErrors.end = formatMessage({
+        id: getTranslation('modal.event.error.end.required'),
+        defaultMessage: 'End date is required',
+      });
+    }
+
+    if (formData.start && formData.end && moment(formData.end).isBefore(moment(formData.start))) {
+      newErrors.end = formatMessage({
+        id: getTranslation('modal.event.error.end.before.start'),
+        defaultMessage: 'End date must be after start date',
+      });
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -90,7 +115,7 @@ const EventModal = ({
         </Dialog.Header>
         <Dialog.Body>
           <Flex direction="column" gap={4}>
-            <Field.Root name="title" required>
+            <Field.Root name="title" required error={errors.title}>
               <Field.Label>
                 {formatMessage({
                   id: getTranslation('modal.event.field.title'),
@@ -107,9 +132,10 @@ const EventModal = ({
                   defaultMessage: 'Enter event title',
                 })}
               />
+              {errors.title && <Field.Error>{errors.title}</Field.Error>}
             </Field.Root>
 
-            <Field.Root name="start" required>
+            <Field.Root name="start" required error={errors.start}>
               <Field.Label>
                 {formatMessage({
                   id: getTranslation('modal.event.field.start'),
@@ -123,9 +149,10 @@ const EventModal = ({
                   setFormData({ ...formData, start: e.target.value })
                 }
               />
+              {errors.start && <Field.Error>{errors.start}</Field.Error>}
             </Field.Root>
 
-            <Field.Root name="end" required>
+            <Field.Root name="end" required error={errors.end}>
               <Field.Label>
                 {formatMessage({
                   id: getTranslation('modal.event.field.end'),
@@ -139,6 +166,7 @@ const EventModal = ({
                   setFormData({ ...formData, end: e.target.value })
                 }
               />
+              {errors.end && <Field.Error>{errors.end}</Field.Error>}
             </Field.Root>
 
             <Field.Root name="description">
